@@ -1,6 +1,7 @@
 services:
   openclaw-gateway:
     image: ${OPENCLAW_IMAGE:-openclaw:local}
+    container_name: "ogc"
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -9,10 +10,19 @@ services:
       CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY:-}
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY:-}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE:-}
-      TZ: ${OPENCLAW_TZ:-UTC}
+      GATEWAY__CONTROLUI__DANGEROUSLYALLOWHOSTHEADERORIGINFALLBACK: "true"
+      # New optimizations
+      NODE_COMPILE_CACHE: "/var/tmp/openclaw-compile-cache"
+      OPENCLAW_NO_RESPAWN: 1
+      # Volcengine keys
+      VOLC_ACCESSKEY: ${VOLC_ACCESSKEY}
+      VOLC_SECRETKEY: ${VOLC_SECRETKEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      TZ: Asia/Hong_Kong
     volumes:
       - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+      - ./openclaw-cache:/var/tmp/openclaw-compile-cache
       ## Uncomment the lines below to enable sandbox isolation
       ## (agents.defaults.sandbox). Requires Docker CLI in the image
       ## (build with --build-arg OPENCLAW_INSTALL_DOCKER_CLI=1) or use
@@ -48,6 +58,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    build:
+      context: .
+      args:
+        - OPENCLAW_INSTALL_BROWSER=1
+        - OPENCLAW_DOCKER_APT_PACKAGES=golang-go build-essential file curl git
 
   openclaw-cli:
     image: ${OPENCLAW_IMAGE:-openclaw:local}
@@ -66,7 +81,6 @@ services:
       CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY:-}
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY:-}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE:-}
-      TZ: ${OPENCLAW_TZ:-UTC}
     volumes:
       - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace

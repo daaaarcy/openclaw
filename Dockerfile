@@ -226,6 +226,38 @@ RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw \
 
 ENV NODE_ENV=production
 
+# --- START OF GITHUB CLI INSTALLATION ---
+# Switch back to root temporarily to install system packages
+USER root
+
+RUN apt-get update && apt-get install -y curl gpg \
+    && mkdir -p -m 755 /etc/apt/keyrings \
+    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && apt-get update \
+    && apt-get install gh -y
+
+RUN mkdir -p /var/tmp/openclaw-compile-cache && \
+    chown -R node:node /var/tmp/openclaw-compile-cache
+# Start from the pre-compiled official image
+FROM ghcr.io/openclaw/openclaw:main
+
+USER root
+
+# 1. Added 'apt-get update' so the installer can find the packages
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-full \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Fixed the typo from /pi to /pip
+RUN ln -sf /usr/bin/pip3 /usr/bin/pip
+
+# --- END OF GITHUB CLI INSTALLATION ---
+
 # Security hardening: Run as non-root user
 # The node:24-bookworm image includes a 'node' user (uid 1000)
 # This reduces the attack surface by preventing container escape via root privileges
