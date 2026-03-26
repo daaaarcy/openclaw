@@ -134,13 +134,13 @@ WORKDIR /app
 # Smoke workflows can opt out of distro upgrades to cut repeated CI time while
 # keeping the default runtime image behavior unchanged.
 RUN --mount=type=cache,id=openclaw-bookworm-apt-cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,id=openclaw-bookworm-apt-lists,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    if [ "${OPENCLAW_DOCKER_APT_UPGRADE}" != "0" ]; then \
-      DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends; \
-    fi && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      procps hostname curl git lsof openssl
+  --mount=type=cache,id=openclaw-bookworm-apt-lists,target=/var/lib/apt,sharing=locked \
+  apt-get update && \
+  if [ "${OPENCLAW_DOCKER_APT_UPGRADE}" != "0" ]; then \
+  DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends; \
+  fi && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  procps hostname curl git lsof openssl
 
 RUN chown node:node /app
 
@@ -260,27 +260,26 @@ USER root
 # We group these to reduce image layers and keep the cache clean.
 # Included: jq (JSON parsing), tmux (persistent sessions), ripgrep (fast code search)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-pip \
-    python3-full \
-    curl \
-    ca-certificates \
-    nano \
-    vim \
-    git \
-    jq \
-    tmux \
-    htop \
-    ripgrep \
-    unzip \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+  python3 \
+  python3-pip \
+  python3-full \
+  curl \
+  ca-certificates \
+  nano \
+  vim \
+  git \
+  jq \
+  tmux \
+  htop \
+  ripgrep \
+  unzip \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-# 2. DuckDB CLI (Always Latest)
-# Using the official install script and ensuring global execution permissions
+# 2. DuckDB CLI (Always grabs the newest stable version)
 RUN curl -L https://install.duckdb.org | sh && \
-    mv duckdb /usr/local/bin/duckdb && \
-    chmod +x /usr/local/bin/duckdb
+  mv /root/.duckdb/cli/latest/duckdb /usr/local/bin/duckdb && \
+  chmod +x /usr/local/bin/duckdb
 
 # 3. Model Context Protocol (MCP) Engine
 # The 'Pro' way: pulling uv/uvx directly from the official image
